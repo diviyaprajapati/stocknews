@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stock Market News</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Latest Market News</h2>
+  <div id="news-list"></div>
+  <button id="next-news">Next News</button>
+
+  <script>
+    let currentIndex = 0;
+    let newsData = [];
+
+    async function loadNews() {
+      try {
+        const rssUrl = 'https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms';
+        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const data = await res.json();
+
+        if (!data.items || data.items.length === 0) return;
+
+        newsData = data.items;
+        showNews();
+      } catch (err) {
+        console.error("Error fetching news:", err.message);
+      }
+    }
+
+    function showNews() {
+      if (currentIndex >= newsData.length) currentIndex = 0;
+
+      const item = newsData[currentIndex];
+      currentIndex++;
+
+      const imgUrl = item.enclosure && item.enclosure.link 
+        ? item.enclosure.link 
+        : "https://via.placeholder.com/300x200?text=Stock+News";
+
+      const cleanDesc = item.description.replace(/<[^>]*>?/gm, "").slice(0, 200) + "...";
+
+      const div = document.createElement("div");
+      div.className = "news-item";
+      div.innerHTML = `
+        <img src="${imgUrl}" alt="news">
+        <div class="news-content">
+          <strong>${item.title}</strong>
+          <small>${cleanDesc}</small>
+        </div>
+      `;
+
+      const list = document.getElementById("news-list");
+      list.innerHTML = "";
+      list.appendChild(div);
+    }
+
+    document.getElementById("next-news").addEventListener("click", showNews);
+
+    loadNews();
+  </script>
+</body>
+</html>
